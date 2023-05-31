@@ -1,23 +1,17 @@
 package graph.algorithm.kamada_kawai;
 
-
 import org.graphstream.graph.Graph;
-
 import org.graphstream.graph.implementations.SingleGraph;
 
-
-public class TestGraphStream {
+public class Main {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-
 		System.setProperty("org.graphstream.ui", "swing");
 
 		// create graph
 		Graph graph = new SingleGraph("Static Graph");
 
-		
-		
 		// node setting
 		graph.addNode("A");
 		graph.addNode("B");
@@ -50,7 +44,6 @@ public class TestGraphStream {
        
 	    //graph visualization
 	    graph.display().disableAutoLayout();
-
 	}
 
 }
