@@ -1,6 +1,7 @@
 package graph.algorithm.kamada_kawai;
 
 
+import org.graphstream.algorithm.Toolkit;
 import org.graphstream.graph.Graph;
 
 import org.graphstream.graph.implementations.SingleGraph;
@@ -34,7 +35,14 @@ public class TestGraphStream {
 		graph.addEdge("CD", "C", "D");
 		graph.addEdge("CF", "C", "F");
 		graph.addEdge("DF", "D", "F");
-
+		
+		
+		
+		
+		
+		
+		
+		//coordinate setting 
 		graph.getNode("A").setAttribute("xy", 0, 0);
 		graph.getNode("B").setAttribute("xy", 1, 0);
 		graph.getNode("C").setAttribute("xy", 2, 0);
@@ -43,6 +51,10 @@ public class TestGraphStream {
 		graph.getNode("E").setAttribute("xy", 1, 1);
 		graph.getNode("F").setAttribute("xy", 2, 1);
         
+		
+		
+		
+		
         
 		//KKGraph setting
 		KKGraph kkGraph=new KKGraph(graph);

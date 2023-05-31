@@ -1,7 +1,7 @@
 package graph.algorithm.kamada_kawai;
 
 import java.util.HashMap;
-import java.util.Map;
+
 
 import org.graphstream.graph.Graph;
 
@@ -12,14 +12,14 @@ public class KKGraph {
 	private Graph graph;
 	
 	@SuppressWarnings("unused")
-	private Map<String,Integer> d;
+	private HashMap<String,Integer> d;
 	@SuppressWarnings("unused")
-	private Map<String,Double> l;
+	private HashMap<String,Double> l;
 	@SuppressWarnings("unused")
-	private Map<String,Double> k;
+	private HashMap<String,Double> k;
 	
 	@SuppressWarnings("unused")	
-	private Map<String,Double> M;
+	private HashMap<String,Double> M;
 	
 	public KKGraph(Graph graph) {
 		
@@ -29,6 +29,14 @@ public class KKGraph {
 		l=new HashMap<>();
 		k=new HashMap<>();
 		M=new HashMap<>();
+	}
+
+	public Graph getGraph() {
+		return graph;
+	}
+
+	public void setGraph(Graph graph) {
+		this.graph = graph;
 	}
 	
 	public void set_d(HashMap<String,Integer> d) {
@@ -45,5 +53,21 @@ public class KKGraph {
 	
 	public void set_M(HashMap<String,Double> M) {
 		this.M=M;
+	}
+	
+	public HashMap<String,Integer> get_d() {
+		return this.d;		
+	}
+	
+	public HashMap<String,Double> get_l() {
+		return this.l;
+	}
+	
+	public HashMap<String,Double> get_k() {
+		return this.k;
+	}
+	
+	public HashMap<String,Double> get_M() {
+		return this.M;
 	}
 }
