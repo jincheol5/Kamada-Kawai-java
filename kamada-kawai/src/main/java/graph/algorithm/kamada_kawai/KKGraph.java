@@ -12,7 +12,7 @@ public class KKGraph {
 	private Graph graph;
 	
 	@SuppressWarnings("unused")
-	private HashMap<String,Integer> d;
+	private HashMap<String,Double> d;
 	@SuppressWarnings("unused")
 	private HashMap<String,Double> l;
 	@SuppressWarnings("unused")
@@ -39,7 +39,7 @@ public class KKGraph {
 		this.graph = graph;
 	}
 	
-	public void set_d(HashMap<String,Integer> d) {
+	public void set_d(HashMap<String,Double> d) {
 		this.d=d;		
 	}
 	
@@ -55,7 +55,7 @@ public class KKGraph {
 		this.M=M;
 	}
 	
-	public HashMap<String,Integer> get_d() {
+	public HashMap<String,Double> get_d() {
 		return this.d;		
 	}
 	

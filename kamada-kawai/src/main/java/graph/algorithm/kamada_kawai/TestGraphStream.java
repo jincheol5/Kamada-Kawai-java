@@ -1,6 +1,8 @@
 package graph.algorithm.kamada_kawai;
 
 
+import java.util.HashMap;
+
 import org.graphstream.algorithm.Toolkit;
 import org.graphstream.graph.Graph;
 
@@ -28,13 +30,13 @@ public class TestGraphStream {
 		graph.addNode("F");
 
 		// edge setting
-		graph.addEdge("AB", "A", "B");
-		graph.addEdge("AE", "A", "E");
-		graph.addEdge("BD", "B", "D");
-		graph.addEdge("BE", "B", "E");
-		graph.addEdge("CD", "C", "D");
-		graph.addEdge("CF", "C", "F");
-		graph.addEdge("DF", "D", "F");
+		graph.addEdge("AB", "A", "B").setAttribute("distance", 1);
+		graph.addEdge("AE", "A", "E").setAttribute("distance", 1);
+		graph.addEdge("BD", "B", "D").setAttribute("distance", 1);
+		graph.addEdge("BE", "B", "E").setAttribute("distance", 1);
+		graph.addEdge("CD", "C", "D").setAttribute("distance", 1);
+		graph.addEdge("CF", "C", "F").setAttribute("distance", 1);
+		graph.addEdge("DF", "D", "F").setAttribute("distance", 1);
 		
 		
 		
@@ -59,10 +61,17 @@ public class TestGraphStream {
 		//KKGraph setting
 		KKGraph kkGraph=new KKGraph(graph);
         
+		//KamadaKawai setting
+		KamadaKawai kk=new KamadaKawai(kkGraph);
+		
+		HashMap<String, HashMap<String, Double>> d_dic=kk.get_d();
+		
+		System.out.println(d_dic.get("A"));
        
-	    //graph visualization
-	    graph.display().disableAutoLayout();
+//	    //graph visualization
+//	    graph.display().disableAutoLayout();
 
+		
 	}
 
 }
