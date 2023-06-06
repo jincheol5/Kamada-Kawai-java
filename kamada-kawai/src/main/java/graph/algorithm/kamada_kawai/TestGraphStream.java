@@ -3,7 +3,7 @@ package graph.algorithm.kamada_kawai;
 
 import java.util.HashMap;
 
-import org.graphstream.algorithm.Toolkit;
+
 import org.graphstream.graph.Graph;
 
 import org.graphstream.graph.implementations.SingleGraph;
@@ -55,6 +55,13 @@ public class TestGraphStream {
         
 		
 		
+		Object[] xy=(Object[]) graph.getNode("B").getAttribute("xy");
+		
+		for(Object o:xy) {
+			System.out.println(Double.valueOf(o.toString()));
+		}
+		
+		
 		
 		
         
@@ -64,9 +71,7 @@ public class TestGraphStream {
 		//KamadaKawai setting
 		KamadaKawai kk=new KamadaKawai(kkGraph);
 		
-		HashMap<String, HashMap<String, Double>> d_dic=kk.get_d();
-		
-		System.out.println(d_dic.get("A"));
+	
        
 //	    //graph visualization
 //	    graph.display().disableAutoLayout();

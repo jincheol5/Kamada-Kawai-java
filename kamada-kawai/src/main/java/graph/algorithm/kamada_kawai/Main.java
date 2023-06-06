@@ -1,7 +1,10 @@
 package graph.algorithm.kamada_kawai;
 
+
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.swing_viewer.ViewPanel;
+import org.graphstream.ui.view.Viewer;
 
 public class Main {
 
@@ -20,7 +23,6 @@ public class Main {
 		graph.addNode("E");
 		graph.addNode("F");
 
-		// edge setting
 		// edge setting
 		graph.addEdge("AB", "A", "B").setAttribute("distance", 1);
 		graph.addEdge("AE", "A", "E").setAttribute("distance", 1);
@@ -42,9 +44,23 @@ public class Main {
 		//KKGraph setting
 		KKGraph kkGraph=new KKGraph(graph);
         
+		
        
 	    //graph visualization
-	    graph.display().disableAutoLayout();
+		Viewer viewer=kkGraph.getGraph().display(false);
+		ViewPanel view=(ViewPanel) viewer.getDefaultView();
+		
+		
+		
+		//KamadaKawai setting
+		KamadaKawai kamadaKawai=new KamadaKawai(kkGraph);
+		kamadaKawai.set_displayLength(view.getSize().getHeight());
+		kamadaKawai.set_K(1.0);
+		kamadaKawai.set_hyperE(0.5);
+		kamadaKawai.updateAlgorithm();
+		
+		
+	    //graph.display().disableAutoLayout();
 	}
 
 }
