@@ -1,321 +1,361 @@
 package graph.algorithm.kamada_kawai;
 
-import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.graphstream.algorithm.Toolkit;
-import org.graphstream.graph.Node;
 import org.graphstream.algorithm.Dijkstra;
-
+import org.graphstream.algorithm.Toolkit;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
 
 public class KamadaKawai {
-
-	@SuppressWarnings("unused")
-	private KKGraph G;
 	
-	@SuppressWarnings("unused")
+	
+	private Graph graph;
+	
+	private Dijkstra dijkstra;
+	
 	private Double K;
 	
-	@SuppressWarnings("unused")
-	private Double hyperE;
 	
-	@SuppressWarnings("unused")
+	
 	private Double displayLength;
 	
+	private HashMap<String,HashMap<String,Double>> l;
 	
-	public KamadaKawai(KKGraph G) {
+	private HashMap<String,HashMap<String,Double>> k;
+	
+	private HashMap<String,Double> delta;
+	
+	public KamadaKawai(Graph g) {
 		
-		this.G=G;
+		this.graph=g;
+		this.dijkstra=new Dijkstra();
+		this.dijkstra.init(this.graph);
+	}
+	
+	/**
+	 * set Dijkstra
+	 * @param source
+	 */
+	public void computeDijkstra(Node source) {
 		
+		this.dijkstra.setSource(source);
+ 		this.dijkstra.compute();
 	}
 	
 	
 	
-	public void set_G(KKGraph G) {
-		this.G=G;
-	}
-	
+	/**
+	 * set K
+	 * K = constant
+	 * @param K
+	 */
 	public void set_K(Double K) {
 		this.K=K;
 	}
 	
-	public void set_hyperE(Double hyperE) {
-		this.hyperE=hyperE;
-	}
 	
+	/**
+	 * set display length
+	 * @param displayLength
+	 */
 	public void set_displayLength(Double displayLength) {
 		this.displayLength=displayLength;
 	}
 	
-	
 	/**
-	 * compute and return shortest length between source and target in the graph
-	 * 
-	 * @param source : source node
-	 * @param target : target node
-	 * @return shortest length between source and target in the graph
+	 * return shortest length between source and target in the graph to use Dijkstra
+	 * @param target
+	 * @return shortest length
 	 */
-	public Double getShortestPathLength(Node source,Node target) {
-		
-		Dijkstra dijkstra=new Dijkstra();
-		dijkstra.init(this.G.getGraph());
-		dijkstra.setSource(source);
- 		dijkstra.compute();
-		
-		return dijkstra.getPathLength(target);
+	public Double getShortestPathLength(Node target) {
+		return this.dijkstra.getPathLength(target);
 	}
+	
 	
 
-	
+	/**
+	 * get delta map
+	 * @return delta map
+	 */
+	public HashMap<String, Double> getDelta() {
+		return delta;
+	}
+
 	/**
 	 * compute and return L value of the graph
-	 * 
-	 * 
-	 * @param display length
+	 * L = desirable length of  a single edge
 	 * @return L value of the graph
 	 */
-	public Double get_L(){
+	public Double compute_L(){
 		
-		return this.displayLength/Toolkit.diameter(this.G.getGraph());
+		return this.displayLength/Toolkit.diameter(this.graph);
 		
 	}
-	
 	
 	/**
 	 * compute and return l HashMap of the graph
-	 * 
-	 * 
-	 * @return l HashMap ot the graph
+	 * l = desirable distances between particles
+	 * @return l HashMap of the graph
 	 */
-	public HashMap<String,HashMap<String,Double>> get_l(){
+	public HashMap<String,HashMap<String,Double>> compute_l(){
 		
-		HashMap<String, HashMap<String, Double>> l_dic=new HashMap<String,HashMap<String,Double>>();
+		HashMap<String, HashMap<String, Double>> l=new HashMap<String,HashMap<String,Double>>();
 		
-		double L=get_L();
+		double L=this.compute_L();
 		
-		for(int source=0;source<this.G.getGraph().getNodeCount();source++) {
-			HashMap<String, Double> target_dic=new HashMap<>();
+		Iterator<Node> sourceNodes=this.graph.nodes().iterator();
+		Iterator<Node> targetNodes=this.graph.nodes().iterator();
+
+		while(sourceNodes.hasNext()) {
+
+			Node source=sourceNodes.next();
 			
-			for(int target=0;target<this.G.getGraph().getNodeCount();target++) 
-				if(source!=target)
-			 		target_dic.put(this.G.getGraph().getNode(target).getId(),L*getShortestPathLength(this.G.getGraph().getNode(source),this.G.getGraph().getNode(target)) );
+			this.computeDijkstra(source);
 			
-			l_dic.put(this.G.getGraph().getNode(source).getId(), target_dic);
+			HashMap<String, Double> targetMap=new HashMap<>();
+			
+			targetNodes=this.graph.nodes().iterator();
+			
+			while(targetNodes.hasNext()) {
+
+				Node target=targetNodes.next();
+
+				if(source.getId()!=target.getId()) 
+					targetMap.put(target.getId(), L*this.getShortestPathLength(target));
+					
+				
+					
+					
+			}
+			
+			l.put(source.getId(), targetMap);
+			
+			
 		}
 		
 		
-		return l_dic;
+		
+		
+		this.l=l;
+		
+		return l;
 		
 	}
 	
 	/**
 	 * compute and return k HashMap of the graph
-	 * 
+	 * k = strength of the spring
 	 * @return k HashMap of the graph
 	 */
-	public HashMap<String,HashMap<String,Double>> get_k(){
+	public HashMap<String,HashMap<String,Double>> compute_k(){
 		
-		HashMap<String, HashMap<String, Double>> k_dic=new HashMap<String,HashMap<String,Double>>();
+		HashMap<String, HashMap<String, Double>> k=new HashMap<String,HashMap<String,Double>>();
 		
-		for(int source=0;source<this.G.getGraph().getNodeCount();source++) {
-			HashMap<String, Double> target_dic=new HashMap<>();
+		Iterator<Node> sourceNodes=this.graph.nodes().iterator();
+		Iterator<Node> targetNodes=this.graph.nodes().iterator();
+
+		while(sourceNodes.hasNext()) {
+
+			Node source=sourceNodes.next();
 			
-			for(int target=0;target<this.G.getGraph().getNodeCount();target++) 
-				if(source!=target)
-			 		target_dic.put(this.G.getGraph().getNode(target).getId(),
-			 				this.K/Math.pow(getShortestPathLength(this.G.getGraph().getNode(source),this.G.getGraph().getNode(target)),2) );
+			this.computeDijkstra(source);
+			
+			HashMap<String, Double> targetMap=new HashMap<>();
 			
 			
-			k_dic.put(this.G.getGraph().getNode(source).getId(), target_dic);
+			targetNodes=this.graph.nodes().iterator();
+			
+			while(targetNodes.hasNext()) {
+
+				Node target=targetNodes.next();
+
+				if(source.getId()!=target.getId()) 
+					targetMap.put(target.getId(),this.K/Math.pow(this.getShortestPathLength(target), 2));
+					
+				
+					
+					
+			}
+			
+			k.put(source.getId(), targetMap);
+			
+			
 		}
 		
-		return k_dic;
+
+		
+		this.k=k;
+		
+		return k;
 		
 	}
 	
-	
-	
 	/**
-	 * mNode의 x에 대한 E의 편미분값을 반환 
+	 * return EXm
+	 * EXm = partial derivative xm of the mNode
 	 * @param mNode
-	 * @return 편미분값 EXm
+	 * @return EXm 
 	 */
-	public Double getEXm(Node mNode) {
-		
-		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
-		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
+	public double compute_EXm(Node mNode) {
 		
 		
 		Double EXm=0.0;
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		double[] coordinate=Toolkit.nodePosition(mNode);
+		
+		double xm=coordinate[0];
+		double ym=coordinate[1];
+		
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+	
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
+		
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				EXm+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						(xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0])
+				EXm+=this.k.get(mNode.getId()).get(node.getId())*(
+						(xm-x)
 						-
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]))
+						(this.l.get(mNode.getId()).get(node.getId())*(xm-x))
 						/
-						Math.sqrt(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2))
+						Math.sqrt(Math.pow(xm-x, 2)+Math.pow(ym-y, 2))	
 						);
+				
 			}
 			
 			
 		}
-		
-		
 		
 		return EXm;
 	}
 	
-	
 	/**
-	 * mNode의 y에 대한 E의 편미분값을 반환 
+	 * return EYm
+	 * EXm = partial derivative ym of the mNode
 	 * @param mNode
-	 * @return 편미분값 EYm
+	 * @return EYm 
 	 */
-	public Double getEYm(Node mNode) {
-		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
-		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
-		
-		
+	public double compute_EYm(Node mNode) {
 		Double EYm=0.0;
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		double[] coordinate=Toolkit.nodePosition(mNode);
+		
+		double xm=coordinate[0];
+		double ym=coordinate[1];
+		
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				EYm+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						(ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1])
+				EYm+=this.k.get(mNode.getId()).get(node.getId())*(
+						(ym-y)
 						-
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]))
+						(this.l.get(mNode.getId()).get(node.getId())*(ym-y))
 						/
-						Math.sqrt(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2))
+						Math.sqrt(Math.pow(xm-x, 2)+Math.pow(ym-y, 2))	
 						);
+				
 			}
 			
 			
 		}
 		
-		
-		
-		return EYm;
+		return EYm;	
 	}
-	
-	/**
-	 * compute and return delta value 
-	 * 
-	 * @param EXm
-	 * @param EYm
-	 * @return
-	 */
-	public Double computeDeltaValue(double EXm,double EYm) {
-		
-		return Math.sqrt(EXm*EXm+EYm*EYm);
-	}
-	
-	/**
-	 * compute and return delta value HashMap about graph
-	 * @return delta value HashMap
-	 */
-	public HashMap<String,Double> compute_M(){
-		
-		
-		HashMap<String,Double> M=new HashMap<String,Double>();
-		
-		double deltaValue;
-
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
-			deltaValue=computeDeltaValue(getEXm(this.G.getGraph().getNode(index)),getEYm(this.G.getGraph().getNode(index)));
-			M.put(this.G.getGraph().getNode(index).getId(),deltaValue);
-		}
-		
-		return M;
-		
-	}
-	
 	
 	/**
 	 * compute and return value of the E2Xm2
-	 * 
-	 * 
 	 * @param mNode
 	 * @return value of the E2Xm2
 	 */
-	public Double getE2Xm2(Node mNode) {
+	public Double compute_E2Xm2(Node mNode) {
 		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
+		Double E2Xm2=0.0;
 		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
+		double[] coordinate=Toolkit.nodePosition(mNode);
 		
-		double E2Xm2=0.0;
+		double xm=coordinate[0];
+		double ym=coordinate[1];
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				
-				E2Xm2+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						
+				E2Xm2+=this.k.get(mNode.getId()).get(node.getId())*(
 						1
 						-
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*Math.pow(ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1],2))
+						(this.l.get(mNode.getId()).get(node.getId())*Math.pow(ym-y, 2))
 						/
-						Math.pow(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2), 1.5)
-						
+						Math.pow(Math.pow(xm-x, 2)+Math.pow(ym-y, 2), 1.5)
 						);
-						
-				
 			}
 			
+			
 		}
+		
 		return E2Xm2;
+		
 	}
 	
 	/**
 	 * compute and return value of the E2Ym2
-	 * 
 	 * @param mNode
 	 * @return value of the E2Ym2
 	 */
-	public Double getE2Ym2(Node mNode) {
+	public Double compute_E2Ym2(Node mNode) {
 		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
+		Double E2Ym2=0.0;
 		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
+		double[] coordinate=Toolkit.nodePosition(mNode);
 		
-		double E2Ym2=0.0;
+		double xm=coordinate[0];
+		double ym=coordinate[1];
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				
-				E2Ym2+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						
+				E2Ym2+=this.k.get(mNode.getId()).get(node.getId())*(
 						1
 						-
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*Math.pow(xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0],2))
+						(this.l.get(mNode.getId()).get(node.getId())*Math.pow(xm-x, 2))
 						/
-						Math.pow(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2), 1.5)
-						
+						Math.pow(Math.pow(xm-x, 2)+Math.pow(ym-y, 2), 1.5)
 						);
-						
-				
 			}
 			
+			
 		}
+		
 		return E2Ym2;
+		
 	}
 	
 	/**
@@ -323,33 +363,37 @@ public class KamadaKawai {
 	 * @param mNode
 	 * @return value of the E2XmYm
 	 */
-	public Double getE2XmYm(Node mNode) {
+	public Double compute_E2XmYm(Node mNode) {
 		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
+		Double E2XmYm=0.0;
 		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
+		double[] coordinate=Toolkit.nodePosition(mNode);
 		
-		double E2XmYm=0.0;
+		double xm=coordinate[0];
+		double ym=coordinate[1];
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				
-				E2XmYm+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0])*(ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]))
+				E2XmYm+=this.k.get(mNode.getId()).get(node.getId())*(
+						(this.l.get(mNode.getId()).get(node.getId())*(xm-x)*(ym-y))
 						/
-						Math.pow(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2), 1.5)
-						
+						Math.pow(Math.pow(xm-x, 2)+Math.pow(ym-y, 2), 1.5)
 						);
-						
-				
 			}
 			
+			
 		}
+		
 		return E2XmYm;
+		
 	}
 	
 	/**
@@ -357,175 +401,112 @@ public class KamadaKawai {
 	 * @param mNode
 	 * @return value of the E2YmXm
 	 */
-	public Double getE2YmXm(Node mNode) {
+	public Double compute_E2YmXm(Node mNode) {
 		
-		double[] xyArray=this.G.get_pos().get(mNode.getId());
+		Double E2YmXm=0.0;
 		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
+		double[] coordinate=Toolkit.nodePosition(mNode);
 		
-		double E2YmXm=0.0;
+		double xm=coordinate[0];
+		double ym=coordinate[1];
 		
-		for(int index=0;index<this.G.getGraph().getNodeCount();index++) {
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
 			
-			if(!this.G.getGraph().getNode(index).equals(mNode)) {
+			double x=Toolkit.nodePosition(node)[0];
+			double y=Toolkit.nodePosition(node)[1];
+			
+			if(mNode.getId()!=node.getId()) {
 				
-				
-				E2YmXm+=this.G.get_k().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(
-						
-						(this.G.get_l().get(mNode.getId()).get(this.G.getGraph().getNode(index).getId())*(xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0])*(ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]))
+				E2YmXm+=this.k.get(mNode.getId()).get(node.getId())*(
+						(this.l.get(mNode.getId()).get(node.getId())*(xm-x)*(ym-y))
 						/
-						Math.pow(Math.pow((xm-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[0]), 2)+Math.pow((ym-this.G.get_pos().get(this.G.getGraph().getNode(index).getId())[1]), 2), 1.5)
-						
+						Math.pow(Math.pow(xm-x, 2)+Math.pow(ym-y, 2), 1.5)
 						);
-						
-				
 			}
 			
+			
 		}
+		
 		return E2YmXm;
+		
+	}
+	
+	
+	/**
+	 * compute and return delta value 
+	 * 
+	 * delta = amount of change
+	 * 
+	 * @param EXm
+	 * @param EYm
+	 * @return delta
+	 */
+	public Double computeDelta(double EXm,double EYm) {
+		
+		
+		
+		return Math.sqrt(EXm*EXm+EYm*EYm);
+	}
+	
+	/**
+	 * compute and return delta value HashMap about graph
+	 * @return delta map
+	 */
+	public HashMap<String,Double> compute_delta(){
+		
+		HashMap<String,Double> delta=new HashMap<String,Double>();
+		
+		double deltaValue;
+		
+		Iterator<Node> nodes=this.graph.nodes().iterator();
+		
+		while(nodes.hasNext()) {
+			Node node=nodes.next();
+			
+			deltaValue=this.computeDelta(this.compute_EXm(node), this.compute_EYm(node));
+			
+			
+			delta.put(node.getId(), deltaValue);
+			
+			
+		}
+		
+		this.delta=delta;
+		
+		return delta;
 	}
 	
 	/**
 	 * compute and update position
-	 * 
-	 * @param updateNode
-	 * @param EXm
-	 * @param EYm
-	 * @param E2Xm2
-	 * @param E2Ym2
-	 * @param E2XmYm
-	 * @param E2YmXm
+	 * @param mNode
 	 */
-	public void updatePosition(Node updateNode,double EXm,double EYm,double E2Xm2,double E2Ym2,double E2XmYm,double E2YmXm) {
+	public void updatePosition(Node mNode) {
 		
+		Double EXm=this.compute_EXm(mNode);
+		Double EYm=this.compute_EYm(mNode);
+		Double E2Xm2=this.compute_E2Xm2(mNode);
+		Double E2Ym2=this.compute_E2Ym2(mNode);
+		Double E2XmYm=this.compute_E2XmYm(mNode);
+		Double E2YmXm=this.compute_E2YmXm(mNode);
 		
+		Double updateValueX=(EYm*E2XmYm/E2Ym2-EXm)/(E2Xm2-E2YmXm*E2XmYm/E2Ym2);
+		Double updateValueY=(EYm*E2Xm2/E2YmXm)/(E2XmYm-E2Ym2*E2Xm2/E2YmXm);
 		
+		double[] coordinate=Toolkit.nodePosition(mNode);
 		
-		//compute update value of the x,y position
-		double updateValueX=(EYm*E2XmYm/E2Ym2-EXm)/(E2Xm2-E2YmXm*E2XmYm/E2Ym2);
-		double updateValueY=(EYm*E2Xm2/E2YmXm)/(E2XmYm-E2Ym2*E2Xm2/E2YmXm);
+		double xm=coordinate[0];
+		double ym=coordinate[1];
 		
-		//update x,y position
-		
-		double[] xyArray=this.G.get_pos().get(updateNode.getId());
-		
-		double xm=xyArray[0];
-		double ym=xyArray[1];
-		
-		this.G.getGraph().getNode(updateNode.getId()).setAttribute("xy", xm+updateValueX,ym+updateValueY);
-		
-		//update pos 
-		xyArray[0]+=updateValueX;
-		xyArray[1]+=updateValueY;
-		
-		System.out.println("node : "+updateNode.getId()+" updated x = "+xyArray[0]+" y = "+xyArray[1]);
-		System.out.println();
-		System.out.println();
+		this.graph.getNode(mNode.getId()).setAttribute("xy",  xm+updateValueX,ym+updateValueY);
 		
 		
 	}
 	
 	
-	/**
-	 * kamada kawai algorithm
-	 */
-	public void updateAlgorithm() {
-		
-		////Kamada Kawai Algorithm
-		//필요조건
-		//display width = 디스플레이 평면의 한 변의 길이
-		//K = spring 강도 상수
-		//hyperE = 종료 조건 값 
-		
-		
-		//1. compute l,k
-		this.G.set_l(get_l());
-		this.G.set_k(get_k());
-		
-		//2. initialize position
-		this.G.update_pos();
-		
-		//3. 반복 update
-		
-		//초기 설정 
-		this.G.set_M(this.compute_M());
-		
-		double maxM=Collections.max(this.G.get_M().values());
-		
-		//max_M이 hyperE보다 작아질 때 까지 반복 
-		while(maxM>this.hyperE) {
-			
-			System.out.println("###update maxM value = "+maxM+" ###");
-			System.out.println();
-			System.out.println();
-			
-			Node updateNode=null;
-			
-			@SuppressWarnings("rawtypes")
-			Iterator keySetIterator=this.G.get_M().keySet().iterator();
-			
-			//maxM값을 가지고 있는 노드 찾기 -> update 될 노드 
-			while(keySetIterator.hasNext()) {
-				String key=keySetIterator.next().toString();
-				if(maxM==this.G.get_M().get(key)) {
-					updateNode=this.G.getGraph().getNode(key);
-					break;
-				}
-			}
-			
-			double M=maxM;
-			
-			//setting EXm,EYm,E2Xm2,E2Ym2,E2XmYm,E2YmXm
-			double EXm=this.getEXm(updateNode);
-			double EYm=this.getEYm(updateNode);
-			double E2Xm2=this.getE2Xm2(updateNode);
-			double E2Ym2=this.getE2Ym2(updateNode);
-			double E2XmYm=this.getE2XmYm(updateNode);
-			double E2YmXm=this.getE2YmXm(updateNode);
-			
-			//조건 만족할 때 까지 x,y update
-			while(M>hyperE) {
-				
-				
-				
+	
+	
 
-				
-				
-				System.out.println("update node = "+updateNode.getId()+" M value : "+M);
-				
-				
-				
-				
-				
-				//update position
-				updatePosition(updateNode,EXm,EYm,E2Xm2,E2Ym2,E2XmYm,E2YmXm);
-				
-				
-				//update EXm,EYm,E2Xm2,E2Ym2,E2XmYm,E2YmXm
-				EXm=this.getEXm(updateNode);
-				EYm=this.getEYm(updateNode);
-				E2Xm2=this.getE2Xm2(updateNode);
-				E2Ym2=this.getE2Ym2(updateNode);
-				E2XmYm=this.getE2XmYm(updateNode);
-				E2YmXm=this.getE2YmXm(updateNode);
-				
-				//update M
-				M=computeDeltaValue(EXm,EYm);
-			}
-			
-			
-			//update된 G에 대한 M값과 max M값 setting
-			this.G.set_M(this.compute_M());
-			maxM=Collections.max(this.G.get_M().values());
-			
-		}
-		
-		
-		
-	}
-	
-	
-	
-	
 }
